@@ -1,0 +1,97 @@
+.dashboard {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+  text-align: left;
+}
+
+.dashboard header {
+  margin-bottom: 24px;
+}
+
+.dashboard header p {
+  color: var(--text-muted, #888);
+}
+
+.dashboard main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 900px) {
+  .dashboard main {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.panel {
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.error {
+  color: #dc2626;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 420px;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.message {
+  padding: 8px 12px;
+  border-radius: 8px;
+  max-width: 85%;
+  white-space: pre-wrap;
+}
+
+.message.user {
+  align-self: flex-end;
+  background: #4f46e5;
+  color: white;
+}
+
+.message.assistant {
+  align-self: flex-start;
+  background: var(--social-bg, #2a2a2a);
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+}
+
+.composer input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #333);
+  background: transparent;
+  color: inherit;
+}
+
+.composer button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  cursor: pointer;
+}
+
+.composer button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

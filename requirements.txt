@@ -1,0 +1,11 @@
+langgraph>=1.0
+langchain-anthropic
+langchain-core
+psycopg2-binary
+pandas
+python-dotenv
+openai
+requests
+beautifulsoup4
+fastapi
+uvicorn[standard]
