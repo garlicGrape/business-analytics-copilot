@@ -4,8 +4,9 @@ Minimal HTTP layer around the LangGraph agent.
 Run: uvicorn agent.server:app --reload --port 8000
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from .agent import agent, extract_text
@@ -19,6 +20,15 @@ app.add_middleware(
     allow_methods=["POST"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def handle_uncaught_exception(request: Request, exc: Exception):
+    # An unhandled exception otherwise bypasses CORSMiddleware entirely, so
+    # the browser reports a misleading "CORS blocked" error instead of the
+    # real failure (e.g. a Gemini rate limit) - return a normal response
+    # instead so the actual error reaches the frontend.
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 
 class ChatRequest(BaseModel):

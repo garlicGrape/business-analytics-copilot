@@ -21,11 +21,15 @@ database lookup and a filing citation, use both tools before answering.
 checkpointer = InMemorySaver()
 
 # reads GOOGLE_API_KEY from the environment automatically
-# gemini-flash-latest is Google's maintained alias for the current recommended
-# Flash model. The free tier grants zero quota for Pro-tier models (confirmed
-# via a live 429 with limit: 0), so Flash is what's actually usable here -
-# swap to gemini-pro-latest if this project moves to a paid tier.
-model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
+#
+# Pinned to gemini-3.1-flash-lite after ruling out the alternatives live:
+#   - gemini-pro-latest / any Pro-tier model: free tier grants zero quota
+#   - gemini-flash-latest (-> gemini-3.5-flash): free tier caps at 20
+#     requests/DAY, exhausted almost immediately by normal testing
+#   - gemini-2.5-flash: 404s - no longer available to new API keys
+# gemini-3.1-flash-lite actually has usable free-tier quota. Revisit this
+# once the project is on a paid tier, or if free-tier limits change again.
+model = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
 
 agent = create_react_agent(
     model,
