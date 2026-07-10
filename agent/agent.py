@@ -1,3 +1,4 @@
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 
@@ -19,8 +20,11 @@ database lookup and a filing citation, use both tools before answering.
 # (pointed at SUPABASE_DB_URL) if you want memory to survive a restart.
 checkpointer = InMemorySaver()
 
+# reads GOOGLE_API_KEY from the environment automatically
+model = ChatGoogleGenerativeAI(model="gemini-3-pro")
+
 agent = create_react_agent(
-    "anthropic:claude-opus-4-8",
+    model,
     tools=[sql_query_tool, rag_search_tool],
     prompt=SYSTEM_PROMPT,
     checkpointer=checkpointer,

@@ -2,13 +2,16 @@ import os
 import re
 
 from langchain_core.tools import tool
-from openai import OpenAI
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from .db import get_connection
 
-EMBEDDING_MODEL = "text-embedding-3-small"  # must match ingestion/embed_filings.py
+# must match ingestion/embed_filings.py - a mismatch here silently breaks
+# retrieval (pgvector requires identical dimensionality to compare vectors)
+EMBEDDING_MODEL = "models/gemini-embedding-001"
+EMBEDDING_DIM = 1536
 
-_openai_client = OpenAI()
+_embedder = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
 
 # Only single, read-only SELECT statements are allowed through this tool.
 # The agent generates this SQL from natural language, so treat it as
@@ -71,11 +74,9 @@ def rag_search_tool(query: str, company: str | None = None) -> str:
     Returns the most relevant filing excerpts with their source company
     and filing date, for citation.
     """
-    embedding = (
-        _openai_client.embeddings.create(model=EMBEDDING_MODEL, input=[query])
-        .data[0]
-        .embedding
-    )
+    embedding = _embedder.embed_documents(
+        [query], task_type="RETRIEVAL_QUERY", output_dimensionality=EMBEDDING_DIM
+    )[0]
 
     conn = get_connection()
     try:
