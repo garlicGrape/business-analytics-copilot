@@ -74,7 +74,9 @@ create index if not exists idx_customers_state on customers(customer_state);
 
 -- ---------------------------------------------------------------------------
 -- Unstructured data: SEC 10-K filing chunks (RAG side)
--- Embedding dimension assumes OpenAI text-embedding-3-small (1536 dims).
+-- Embedding dimension uses Gemini's gemini-embedding-001, truncated to
+-- 1536 dims via output_dimensionality (see ingestion/embed_filings.py and
+-- agent/tools.py - both must stay in sync with this column size).
 -- Change the vector(1536) size below if you use a different embedding model.
 -- ---------------------------------------------------------------------------
 

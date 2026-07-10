@@ -7,8 +7,11 @@ Setup:
        + the match_document_chunks RPC).
     2. Set in .env:
          SUPABASE_DB_URL       - Supabase Postgres connection string
-         OPENAI_API_KEY        - used for text-embedding-3-small (1536 dims,
-                                  must match the vector(1536) column in schema.sql)
+         GOOGLE_API_KEY        - used for gemini-embedding-001, truncated to
+                                  1536 dims to match the vector(1536) column
+                                  in schema.sql (also used by agent/tools.py -
+                                  keep EMBEDDING_MODEL/EMBEDDING_DIM in sync
+                                  between the two files, or search stops matching)
          SEC_EDGAR_CONTACT     - required by SEC's fair-access policy, e.g.
                                   "Your Name your.email@example.com"
     3. python ingestion/embed_filings.py
@@ -26,7 +29,7 @@ import psycopg2
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from openai import OpenAI
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 load_dotenv()
 
@@ -34,7 +37,8 @@ DB_URL = os.environ["SUPABASE_DB_URL"]
 SEC_CONTACT = os.environ.get(
     "SEC_EDGAR_CONTACT", "Portfolio Project portfolio-project@example.com"
 )
-EMBEDDING_MODEL = "text-embedding-3-small"  # 1536 dims - matches schema.sql
+EMBEDDING_MODEL = "models/gemini-embedding-001"  # must match agent/tools.py
+EMBEDDING_DIM = 1536  # must match schema.sql's vector(1536) and agent/tools.py
 
 # Ticker -> 10-digit zero-padded CIK. Extend this list as you like; keep it
 # to ~10-15 companies for a portfolio-scale corpus (see plan for storage math).
@@ -55,7 +59,7 @@ HEADERS = {"User-Agent": SEC_CONTACT}
 CHUNK_SIZE = 1500
 CHUNK_OVERLAP = 200
 
-client = OpenAI()
+embedder = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
 
 
 def get_latest_10k(cik: str):
@@ -104,14 +108,10 @@ def chunk_text(text: str, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
 
 
 def embed_chunks(chunks: list[str]) -> list[list[float]]:
-    # batch to stay well under the API's per-request token limits
-    embeddings = []
-    batch_size = 100
-    for i in range(0, len(chunks), batch_size):
-        batch = chunks[i : i + batch_size]
-        resp = client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
-        embeddings.extend([item.embedding for item in resp.data])
-    return embeddings
+    # embed_documents batches internally (by count and token budget)
+    return embedder.embed_documents(
+        chunks, task_type="RETRIEVAL_DOCUMENT", output_dimensionality=EMBEDDING_DIM
+    )
 
 
 def upsert_chunks(conn, company, filing_date, source_url, chunks, embeddings):

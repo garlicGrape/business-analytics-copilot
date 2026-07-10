@@ -63,7 +63,7 @@ pip install -r requirements.txt
 # and unzip into ingestion/data/olist/
 python ingestion/load_olist.py
 
-# requires OPENAI_API_KEY and SEC_EDGAR_CONTACT in .env
+# requires GOOGLE_API_KEY and SEC_EDGAR_CONTACT in .env
 python ingestion/embed_filings.py
 ```
 
