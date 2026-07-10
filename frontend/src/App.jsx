@@ -71,7 +71,10 @@ function Chat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ thread_id: THREAD_ID, message: text }),
       })
-      if (!res.ok) throw new Error(`server returned ${res.status}`)
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        throw new Error(body?.detail ?? `server returned ${res.status}`)
+      }
       const data = await res.json()
       setMessages((m) => [...m, { role: 'assistant', content: data.response }])
     } catch (err) {
