@@ -1,0 +1,22 @@
+# secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# node
+node_modules/
+frontend/dist/
+
+# data (downloaded/generated locally, not committed)
+data/
+ingestion/raw/
+ingestion/filings/
+*.sqlite
+*.db
+
+# os
+.DS_Store
