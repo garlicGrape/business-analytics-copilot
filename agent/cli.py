@@ -1,6 +1,6 @@
 """Quick interactive test harness: python -m agent.cli"""
 
-from .agent import agent
+from .agent import agent, extract_text
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
             {"messages": [{"role": "user", "content": user_input}]},
             config={"configurable": {"thread_id": thread_id}},
         )
-        print(result["messages"][-1].content)
+        print(extract_text(result["messages"][-1].content))
 
 
 if __name__ == "__main__":

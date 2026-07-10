@@ -122,7 +122,9 @@ def load_table(conn, csv_name, table, columns, pk_cols):
         return
 
     df = pd.read_csv(csv_path, usecols=columns)
-    df = df.where(pd.notnull(df), None)
+    # cast to object first - on a numeric-dtype column, .where(..., None) silently
+    # keeps NaN instead of None, since a float64 array can't hold Python None
+    df = df.astype(object).where(pd.notnull(df), None)
     rows = list(df[columns].itertuples(index=False, name=None))
     if not rows:
         print(f"skip {table}: no rows")
