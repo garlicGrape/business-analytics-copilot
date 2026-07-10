@@ -21,7 +21,11 @@ database lookup and a filing citation, use both tools before answering.
 checkpointer = InMemorySaver()
 
 # reads GOOGLE_API_KEY from the environment automatically
-model = ChatGoogleGenerativeAI(model="gemini-3-pro")
+# gemini-flash-latest is Google's maintained alias for the current recommended
+# Flash model. The free tier grants zero quota for Pro-tier models (confirmed
+# via a live 429 with limit: 0), so Flash is what's actually usable here -
+# swap to gemini-pro-latest if this project moves to a paid tier.
+model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
 
 agent = create_react_agent(
     model,
@@ -29,3 +33,16 @@ agent = create_react_agent(
     prompt=SYSTEM_PROMPT,
     checkpointer=checkpointer,
 )
+
+
+def extract_text(content) -> str:
+    """Gemini returns message content as a list of content blocks (each
+    carrying extra metadata like thought signatures), not a plain string
+    like Claude does. Normalize either shape down to plain text."""
+    if isinstance(content, str):
+        return content
+    return "".join(
+        block.get("text", "")
+        for block in content
+        if isinstance(block, dict) and block.get("type") == "text"
+    )

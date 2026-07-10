@@ -30,7 +30,10 @@ create table if not exists product_category_translation (
 
 create table if not exists products (
     product_id text primary key,
-    product_category_name text references product_category_translation(product_category_name),
+    -- not a foreign key: the real Olist dataset has a handful of category
+    -- names in products (e.g. "pc_gamer") that are missing from the
+    -- translation table, so this can't be a strict referential constraint
+    product_category_name text,
     product_weight_g numeric,
     product_length_cm numeric,
     product_height_cm numeric,

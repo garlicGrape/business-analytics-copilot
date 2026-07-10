@@ -56,8 +56,11 @@ COMPANIES = {
 }
 
 HEADERS = {"User-Agent": SEC_CONTACT}
-CHUNK_SIZE = 1500
-CHUNK_OVERLAP = 200
+# Larger chunks than a typical RAG setup: the Gemini free tier caps embedding
+# calls at 100 requests/minute, and langchain_google_genai issues roughly one
+# request per chunk for this model, so fewer/bigger chunks means fewer calls.
+CHUNK_SIZE = 6000
+CHUNK_OVERLAP = 400
 
 embedder = GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL)
 
@@ -107,11 +110,33 @@ def chunk_text(text: str, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
     return chunks
 
 
+def _embed_one_with_retry(text: str, max_retries: int = 6) -> list[float]:
+    for attempt in range(max_retries):
+        try:
+            return embedder.embed_documents(
+                [text],
+                task_type="RETRIEVAL_DOCUMENT",
+                output_dimensionality=EMBEDDING_DIM,
+            )[0]
+        except Exception as exc:
+            if "RESOURCE_EXHAUSTED" in str(exc) or "429" in str(exc):
+                wait = 20
+                print(f"  rate limited, waiting {wait}s (attempt {attempt + 1}/{max_retries})...")
+                time.sleep(wait)
+                continue
+            raise
+    raise RuntimeError("embedding failed after repeated rate-limit retries")
+
+
 def embed_chunks(chunks: list[str]) -> list[list[float]]:
-    # embed_documents batches internally (by count and token budget)
-    return embedder.embed_documents(
-        chunks, task_type="RETRIEVAL_DOCUMENT", output_dimensionality=EMBEDDING_DIM
-    )
+    # One request per chunk, paced to stay under the free tier's
+    # 100 requests/minute cap on embed_content (~0.7s/req = ~85/min).
+    embeddings = []
+    for i, chunk in enumerate(chunks):
+        embeddings.append(_embed_one_with_retry(chunk))
+        if i < len(chunks) - 1:
+            time.sleep(0.7)
+    return embeddings
 
 
 def upsert_chunks(conn, company, filing_date, source_url, chunks, embeddings):

@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from .agent import agent
+from .agent import agent, extract_text
 from .db import get_connection
 
 app = FastAPI(title="Business Analytics Copilot")
@@ -36,7 +36,7 @@ def chat(req: ChatRequest) -> ChatResponse:
         {"messages": [{"role": "user", "content": req.message}]},
         config={"configurable": {"thread_id": req.thread_id}},
     )
-    return ChatResponse(response=result["messages"][-1].content)
+    return ChatResponse(response=extract_text(result["messages"][-1].content))
 
 
 @app.get("/health")
